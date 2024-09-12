@@ -31,9 +31,12 @@ def get_session_cookies():
     session = requests.Session()  # Crea una sesión persistente
     response = session.post(login_url, headers=headers, params=login_data)
     
-    if 'Set-Cookie' in response.headers:
-        print(f"[INFO] Autenticación exitosa. PHPSESSID obtenido.")
-        return session.cookies
+    if response.ok and 'Set-Cookie' in response.headers:
+        cookies = session.cookies.get_dict()
+        # Asegurarse de que la cookie 'security' esté en 'low'
+        cookies['security'] = 'low'
+        print(f"[INFO] Autenticación exitosa. PHPSESSID y cookie de seguridad obtenidos.")
+        return cookies
     else:
         print(f"[ERROR] Falló la autenticación. No se pudo obtener PHPSESSID.")
         return None
